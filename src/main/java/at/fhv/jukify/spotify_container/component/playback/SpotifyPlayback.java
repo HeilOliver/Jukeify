@@ -5,6 +5,7 @@ import at.fhv.jukify.controller.MessageCenter;
 import at.fhv.jukify.controller.model.TrackPojo;
 import at.fhv.jukify.spotify_container.ApiFactory;
 import at.fhv.jukify.spotify_container.component.auth.SpotifyAuth;
+import at.fhv.jukify.spotify_container.component.user.SpotifyUser;
 import at.fhv.jukify.spotify_container.exception.SpotifyAuthException;
 import at.fhv.jukify.spotify_container.exception.SpotifyConfigurationException;
 import com.google.gson.JsonParser;
@@ -54,8 +55,9 @@ public class SpotifyPlayback {
                     artistsString[i] = artists[i].getName();
                 }
                 currentTrack.setArtists(artistsString);
-                currentTrack.setTimestamp(currentTrackFuture.get().getProgress_ms());
+                currentTrack.setCurrentTimestamp(currentTrackFuture.get().getProgress_ms());
                 currentTrack.setDuration(track.getDurationMs());
+                currentTrack.setPlaying(currentTrackFuture.get().getIs_playing());
                 return currentTrack;
 
             } catch (SpotifyConfigurationException | ExecutionException | InterruptedException e) {
@@ -72,9 +74,9 @@ public class SpotifyPlayback {
     /**
      * Plays a playlist from the very beginning
      * @param playlistID
-     * @param userID
      */
-    public void playPlaylist(String playlistID, String userID) {
+    public void playPlaylist(String playlistID) {
+        String userID = SpotifyUser.getInstance().getUser().getUserID();
         String contextURI = "spotify:user:" + userID + ":playlist:" + playlistID;
         if (SpotifyAuth.isAuthenticationProvided()) {
             try {
@@ -88,4 +90,5 @@ public class SpotifyPlayback {
             }
         }
     }
+
 }

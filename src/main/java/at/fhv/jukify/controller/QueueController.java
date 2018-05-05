@@ -2,6 +2,7 @@ package at.fhv.jukify.controller;
 
 import at.fhv.jukify.controller.model.PlaylistPojo;
 import at.fhv.jukify.controller.model.TrackPojo;
+import at.fhv.jukify.spotify_container.component.playback.SpotifyPlayback;
 import at.fhv.jukify.spotify_container.component.playback.SpotifyPlaylist;
 import at.fhv.jukify.spotify_container.component.user.SpotifyUser;
 import at.fhv.jukify.spotify_container.exception.SpotifyAuthException;
@@ -16,8 +17,18 @@ public class QueueController {
     private static LinkedList<TrackPojo> queue = new LinkedList<>();
     private static PlaylistPojo playlistQueue;
     private static PlaylistPojo sourcePlaylist;
+    private static Thread updaterThread;
 
     private static Iterator<TrackPojo> sourcePlayListTrackPaging;
+
+    private static QueueController instance;
+
+    public static QueueController getInstance(){
+        if(instance == null){
+            instance = new QueueController();
+        }
+        return instance;
+    }
 
     public List<PlaylistPojo> getUserPlaylists(){
         try {
@@ -35,12 +46,18 @@ public class QueueController {
         String playlistNameString = "Jukify + " + dtf.format(localDate);
 
         SpotifyPlaylist playlist = SpotifyPlaylist.getInstance();
+        SpotifyPlayback playback = SpotifyPlayback.getInstance();
         try {
             playlistQueue = playlist.createPlaylist(playlistNameString);
             sourcePlayListTrackPaging = playlist.getTracksFromPlaylist(sourcePlaylist.getPlaylistID()).iterator();
+            addFromSourcePlaylist();
+            playback.playPlaylist(playlistQueue.getPlaylistID());
+            updaterThread = new Thread(new QueueUpdater());
+            updaterThread.start();
         } catch (SpotifyAuthException e) {
             e.printStackTrace();
         }
+
     }
 
     public void addOrUpdateVote(String trackID){
@@ -59,14 +76,31 @@ public class QueueController {
         }
     }
 
-    public String getNextTrackFromQueue(){
-        Collections.sort(queue, new Comparator<TrackPojo>() {
-            @Override
-            public int compare(TrackPojo o1, TrackPojo o2) {
-                return Integer.compare(o1.getVoteCount(), o2.getVoteCount());
+    public void updateQueue(){
+        String nextTrack = getNextTrackFromQueue();
+        if(!nextTrack.isEmpty()) {
+            SpotifyPlaylist playlist = SpotifyPlaylist.getInstance();
+            try {
+                playlist.addToPlaylist(playlistQueue.getPlaylistID(), nextTrack);
+            } catch (SpotifyAuthException e) {
+                e.printStackTrace();
             }
-        });
-        return queue.getFirst().getTrackID();
+        } else {
+            addFromSourcePlaylist();
+        }
+    }
+
+    public String getNextTrackFromQueue(){
+        if(!queue.isEmpty()) {
+            Collections.sort(queue, new Comparator<TrackPojo>() {
+                @Override
+                public int compare(TrackPojo o1, TrackPojo o2) {
+                    return Integer.compare(o1.getVoteCount(), o2.getVoteCount());
+                }
+            });
+            return queue.getFirst().getTrackID();
+        }
+        return "";
     }
 
     public void addFromSourcePlaylist(){
@@ -83,6 +117,11 @@ public class QueueController {
                 sourcePlayListTrackPaging = trackPojos.iterator();
             }
         }
+    }
+
+
+    public void dispose(){
+        QueueUpdater.setRunning(false);
     }
 
 }

@@ -5,9 +5,26 @@ public class TrackPojo {
     private String trackName;
     private String album;
     private String[] artists;
-    private int current_timestamp;
+    private int currentTimestamp;
     private int duration;
     private int voteCount = 0;
+    private boolean isPlaying;
+
+    public int getCurrentTimestamp() {
+        return currentTimestamp;
+    }
+
+    public void setCurrentTimestamp(int currentTimestamp) {
+        this.currentTimestamp = currentTimestamp;
+    }
+
+    public boolean isPlaying() {
+        return isPlaying;
+    }
+
+    public void setPlaying(boolean playing) {
+        isPlaying = playing;
+    }
 
     public int getDuration() {
         return duration;
@@ -47,14 +64,6 @@ public class TrackPojo {
 
     public void setAlbum(String album) {
         this.album = album;
-    }
-
-    public long getTimestamp() {
-        return current_timestamp;
-    }
-
-    public void setTimestamp(int current_timestamp) {
-        this.current_timestamp = current_timestamp;
     }
 
     public int getVoteCount() {

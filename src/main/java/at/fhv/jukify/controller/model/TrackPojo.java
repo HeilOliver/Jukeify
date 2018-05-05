@@ -7,6 +7,7 @@ public class TrackPojo {
     private String[] artists;
     private int current_timestamp;
     private int duration;
+    private int voteCount = 0;
 
     public int getDuration() {
         return duration;
@@ -55,4 +56,13 @@ public class TrackPojo {
     public void setTimestamp(int current_timestamp) {
         this.current_timestamp = current_timestamp;
     }
+
+    public int getVoteCount() {
+        return voteCount;
+    }
+
+    public void setVoteCount(int voteCount) {
+        this.voteCount = voteCount;
+    }
+
 }
